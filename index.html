@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Seguimiento de producción claro y directo</title>
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --surface: #ffffff;
+      --ink: #0f172a;
+      --muted: #64748b;
+      --border: #e2e8f0;
+      --primary: #1d4ed8;
+      --primary-soft: #eff6ff;
+      --teal: #0d9488;
+      --amber: #d97706;
+      --amber-soft: #fffbeb;
+      --red: #dc2626;
+      --red-soft: #fef2f2;
+      --green: #16a34a;
+      --green-soft: #f0fdf4;
+      --radius: 14px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      line-height: 1.5;
+    }
+    .header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 24px;
+      position: sticky;
+      top: 0;
+      z-index: 20;
+    }
+    .header-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+    }
+    .title { margin: 0; font-size: 20px; font-weight: 700; letter-spacing: -0.02em; }
+    .subtitle { margin: 2px 0 0; font-size: 13px; color: var(--muted); }
+    .sync-tag {
+      display: inline-block;
+      margin-top: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--teal);
+      background: #f0fdfa;
+      border: 1px solid #99f6e4;
+      padding: 2px 9px;
+      border-radius: 999px;
+    }
+    .actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .btn {
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--ink);
+      padding: 8px 13px;
+      border-radius: 9px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .btn:hover { background: #f1f5f9; }
+    .btn-primary { background: var(--primary); border-color: var(--primary); color: #fff; }
+    .btn-primary:hover { background: #1e40af; }
+    .btn-soft { background: var(--amber-soft); border-color: #fde68a; color: #92400e; }
+    .banner-ro {
+      display: none;
+      background: var(--amber-soft);
+      border-bottom: 1px solid #fde68a;
+      color: #92400e;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 9px 24px;
+    }
+    .banner-ro-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .main { max-width: 1200px; margin: 24px auto; padding: 0 20px 60px; }
+    .tabs {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    @media (max-width: 760px) { .tabs { grid-template-columns: 1fr; } }
+    .tab {
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      padding: 15px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.15s ease;
+    }
+    .tab:hover { border-color: #cbd5e1; }
+    .tab.active {
+      border-color: var(--primary);
+      background: var(--primary-soft);
+    }
+    .tab-title { font-size: 15px; font-weight: 700; color: var(--ink); }
+    .tab-desc { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .pill {
+      background: #f1f5f9;
+      color: var(--ink);
+      font-size: 12px;
+      font-weight: 700;
+      padding: 5px 10px;
+      border-radius: 999px;
+      white-space: nowrap;
+    }
+    .tab.active .pill { background: var(--primary); color: #fff; }
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+    @media (max-width: 760px) { .summary-grid { grid-template-columns: 1fr; } }
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 18px;
+    }
+    .stat-label { font-size: 12px; font-weight: 600; color: var(--muted); }
+    .stat-value { font-size: 28px; font-weight: 700; margin-top: 4px; letter-spacing: -0.02em; }
+    .stat-note { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    .card-head {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .card-title { margin: 0; font-size: 16px; font-weight: 700; }
+    .card-sub { margin: 2px 0 0; font-size: 13px; color: var(--muted); }
+    .of-stack { display: flex; flex-direction: column; gap: 10px; }
+    .of-item {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--surface);
+      overflow: hidden;
+    }
+    .of-item.open { border-color: var(--primary); }
+    .of-row-btn {
+      width: 100%;
+      background: var(--surface);
+      border: none;
+      padding: 14px 18px;
+      display: grid;
+      grid-template-columns: 1.4fr 1.8fr 1fr 1fr auto;
+      gap: 14px;
+      align-items: center;
+      text-align: left;
+      cursor: pointer;
+    }
+    @media (max-width: 820px) { .of-row-btn { grid-template-columns: 1fr 1fr; } }
+    .of-row-btn:hover { background: #f8fafc; }
+    .of-num { font-size: 14px; font-weight: 700; color: var(--ink); }
+    .of-name { font-size: 13px; color: var(--muted); }
+    .bar-wrap { display: flex; align-items: center; gap: 10px; }
+    .bar-track { flex: 1; height: 8px; background: #e2e8f0; border-radius: 999px; overflow: hidden; }
+    .bar-fill { height: 100%; background: var(--primary); border-radius: 999px; }
+    .badge-ok { background: var(--green-soft); color: var(--green); padding: 4px 9px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+    .badge-warn { background: var(--amber-soft); color: var(--amber); padding: 4px 9px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+    .badge-red { background: var(--red-soft); color: var(--red); padding: 4px 9px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+    .of-panel {
+      display: none;
+      padding: 18px;
+      border-top: 1px solid var(--border);
+      background: #f8fafc;
+    }
+    .of-item.open .of-panel { display: block; }
+    .meta-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin-bottom: 16px;
+    }
+    .meta-box label { display: block; font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; }
+    .meta-box .val-static { font-size: 13px; font-weight: 700; color: var(--ink); margin-top: 5px; display: block; }
+    .crono-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px;
+      margin-bottom: 16px;
+    }
+    .crono-title { font-size: 13px; font-weight: 700; margin-bottom: 10px; color: var(--ink); }
+    .crono-line {
+      display: grid;
+      grid-template-columns: 230px 1fr 185px;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 8px;
+      font-size: 12px;
+    }
+    @media (max-width: 720px) { .crono-line { grid-template-columns: 1fr; gap: 4px; } }
+    .crono-track { height: 14px; background: #e2e8f0; border-radius: 999px; overflow: hidden; }
+    .crono-fill { height: 100%; background: var(--teal); border-radius: 999px; }
+    .crono-fill.delayed { background: var(--red); }
+    .table-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow-x: auto;
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th {
+      background: #f1f5f9;
+      color: var(--ink);
+      font-weight: 700;
+      font-size: 12px;
+      text-align: left;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    td { padding: 9px 12px; border-bottom: 1px solid var(--border); }
+    tr:last-child td { border-bottom: none; }
+    .menu-box { position: relative; }
+    .dropdown {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: 110%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      box-shadow: 0 10px 25px rgba(15,23,42,0.12);
+      min-width: 245px;
+      padding: 6px;
+      z-index: 40;
+    }
+    .dropdown.open { display: block; }
+    .dropdown button {
+      width: 100%;
+      background: transparent;
+      border: none;
+      text-align: left;
+      padding: 9px 12px;
+      border-radius: 7px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--ink);
+      cursor: pointer;
+    }
+    .dropdown button:hover { background: #f1f5f9; }
+    .modal-bg {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(15,23,42,0.45);
+      align-items: center;
+      justify-content: center;
+      z-index: 50;
+      padding: 16px;
+    }
+    .modal-bg.open { display: flex; }
+    .modal-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      max-width: 540px;
+      width: 100%;
+      padding: 20px;
+    }
+    .modal-card input {
+      width: 100%;
+      padding: 9px 11px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 13px;
+      margin: 10px 0 14px;
+    }
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: var(--ink);
+      color: #fff;
+      padding: 10px 16px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+      z-index: 60;
+    }
+    .toast.show { opacity: 1; }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="header-inner">
+      <div>
+        <h1 class="title">Seguimiento de producción claro y directo</h1>
+        <p class="subtitle">Conectado a planilla · Sincronización automática cada 1 hora</p>
+        <span class="sync-tag" id="syncStatus">Datos locales cargados · Esperando enlace de Google Sheets</span>
+      </div>
+      <div class="actions">
+        <button class="btn btn-primary" onclick="syncFromSheets(true)">Actualizar ahora</button>
+        <button id="btnRo" class="btn btn-soft" onclick="toggleRo()">Cambiar a Solo Lectura</button>
+        <div class="menu-box">
+          <button class="btn" onclick="toggleDropdown(event)">Compartir / Planilla ▾</button>
+          <div id="dropdown" class="dropdown">
+            <button onclick="openSheetModal()">Configurar Link Google Sheets (.CSV)</button>
+            <button onclick="copyLink(true)">Copiar Link Solo Lectura (?modo=ver)</button>
+            <button onclick="copyLink(false)">Copiar Link General</button>
+            <button onclick="exportCsv()">Exportar CSV Actual</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div id="bannerRo" class="banner-ro">
+    <div class="banner-ro-inner">
+      <span>Vista Solo Lectura (?modo=ver): los datos se actualizan solos cada 1 hora desde la planilla.</span>
+      <button class="btn" style="padding:5px 10px;font-size:12px;" onclick="toggleRo()">Modo Edición</button>
+    </div>
+  </div>
+
+  <main class="main">
+    <div class="tabs">
+      <button class="tab active" data-sec="motocompresores" onclick="setSector('motocompresores')">
+        <div>
+          <div class="tab-title">Motocompresores</div>
+          <div class="tab-desc">Tocá para ver OFs y cronograma</div>
+        </div>
+        <span class="pill" id="pill-mc">10 OFs</span>
+      </button>
+      <button class="tab" data-sec="generacion" onclick="setSector('generacion')">
+        <div>
+          <div class="tab-title">Generación</div>
+          <div class="tab-desc">Radiadores J420 y Filtrado Gas</div>
+        </div>
+        <span class="pill" id="pill-gen">14 OFs</span>
+      </button>
+      <button class="tab" data-sec="externos" onclick="setSector('externos')">
+        <div>
+          <div class="tab-title">Equipos Externos</div>
+          <div class="tab-desc">Skids SACDE y Filtrado Externo</div>
+        </div>
+        <span class="pill" id="pill-ext">11 OFs</span>
+      </button>
+    </div>
+
+    <div class="summary-grid">
+      <div class="stat-card">
+        <div class="stat-label">Avance promedio del sector</div>
+        <div class="stat-value" id="statAvg">0.0%</div>
+        <div class="stat-note" id="statSecName">Motocompresores</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Órdenes de Fabricación (OF)</div>
+        <div class="stat-value" id="statCount">0</div>
+        <div class="stat-note">Tocá cualquier OF para abrir su cronograma</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Mayor desvío registrado</div>
+        <div class="stat-value" id="statDelay">0 días</div>
+        <div class="stat-note">Atraso máximo en tareas del sector</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <h2 class="card-title" id="listHeading">Cronograma por OF · Motocompresores</h2>
+          <p class="card-sub">Tocá cada OF para ver su cronograma de tareas, fechas y desvíos.</p>
+        </div>
+      </div>
+      <div class="of-stack" id="ofStack"></div>
+    </div>
+  </main>
+
+  <div id="sheetModal" class="modal-bg">
+    <div class="modal-card">
+      <h3 style="margin:0 0 6px;font-size:16px;">Enlace CSV de Google Sheets</h3>
+      <p style="margin:0;font-size:13px;color:#64748b;">
+        Pegá acá el link público en formato <b>.csv</b> generado en <i>Archivo → Compartir → Publicar en la web</i>. Se consultará automáticamente cada 1 hora.
+      </p>
+      <input type="url" id="sheetUrlInput" placeholder="https://docs.google.com/spreadsheets/d/.../pub?output=csv" />
+      <div style="display:flex;justify-content:flex-end;gap:8px;">
+        <button class="btn" onclick="closeSheetModal()">Cancelar</button>
+        <button class="btn btn-primary" onclick="saveSheetUrl()">Guardar y Sincronizar</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // Pegá acá tu enlace CSV de Google Sheets si querés dejarlo fijo en el archivo
+    const DEFAULT_SHEETS_CSV_URL = "";
+    const SHEET_URL_KEY = "seguimiento_sheets_csv_url_v1";
+    const REFRESH_MS = 3600000; // 1 hora
+
+    const INITIAL_DB = {"motocompresores": [{"id": "mc_8144869", "of": "8144869", "ident": "MAV 318", "cliente": "YPF", "loc": "LCCE4 #1", "desc": "MC 3E G3608 KBC4 - AER108 // (KG-441)", "pct": 95.64, "despacho": "29/09/2026", "faltantes": "LIBERACIÓN FAT", "estado": "PROCESO DE FAT", "comentario": "15/10 DESPACHO", "max_atraso": 0, "tareas": [{"tarea": "FABRICACIÓN Y MONTAJE GENERAL", "plan": "29/09/2026", "actualizada": "29/09/2026", "real": "PROCESO DE FAT", "atraso": 0}, {"tarea": "DESPACHO", "plan": "29/09/2026", "actualizada": "15/10/2026", "real": "-", "atraso": 0}]}, {"id": "mc_8144870", "of": "8144870", "ident": "MAV 319", "cliente": "YPF", "loc": "LCCE4 #2", "desc": "MC 3E G3608 KBC4 - AER108 // (KG-442)", "pct": 90.42, "despacho": "30/09/2026", "faltantes": "FAT", "estado": "MONTANDO TANQUE DE AGUA Y ESCAPE", "comentario": "26/10 FAT INTERNA", "max_atraso": 43, "tareas": [{"tarea": "HORMIGONADO / SKID", "plan": "29/07/2026", "actualizada": "04/08/2026", "real": "04/08/2026", "atraso": 6}, {"tarea": "MONTAJE COMPRESOR", "plan": "12/08/2026", "actualizada": "19/08/2026", "real": "19/08/2026", "atraso": 7}, {"tarea": "MONTAJE MOTOR", "plan": "19/08/2026", "actualizada": "26/08/2026", "real": "26/08/2026", "atraso": 7}, {"tarea": "MONTAJE COOLER / AEROREFRIGERADOR", "plan": "26/08/2026", "actualizada": "04/09/2026", "real": "04/09/2026", "atraso": 9}, {"tarea": "PIPING PROCESO / GAS", "plan": "02/09/2026", "actualizada": "15/09/2026", "real": "15/09/2026", "atraso": 13}, {"tarea": "PIPING AGUA / ACEITE / AIRE", "plan": "07/09/2026", "actualizada": "22/09/2026", "real": "22/09/2026", "atraso": 15}, {"tarea": "MONTAJE BOTELLONES / SCRUBBERS", "plan": "09/09/2026", "actualizada": "25/09/2026", "real": "25/09/2026", "atraso": 16}, {"tarea": "MONTAJE ESCAPE", "plan": "14/09/2026", "actualizada": "02/10/2026", "real": "-", "atraso": 18}, {"tarea": "ALINEACIÓN MOTOR / COMPRESOR", "plan": "16/09/2026", "actualizada": "08/10/2026", "real": "-", "atraso": 22}, {"tarea": "MONTAJE ELÉCTRICO / INSTRUMENTACIÓN", "plan": "21/09/2026", "actualizada": "20/10/2026", "real": "-", "atraso": 29}, {"tarea": "PRUEBAS NEUMÁTICAS / HIDROSTÁTICAS", "plan": "23/09/2026", "actualizada": "27/10/2026", "real": "-", "atraso": 34}, {"tarea": "PINTURA FINAL", "plan": "25/09/2026", "actualizada": "07/11/2026", "real": "-", "atraso": 43}, {"tarea": "FAT / PRECOMISIONADO", "plan": "28/09/2026", "actualizada": "12/11/2026", "real": "-", "atraso": 45}, {"tarea": "DESPACHO", "plan": "30/09/2026", "actualizada": "16/11/2026", "real": "-", "atraso": 47}]}, {"id": "mc_8144953", "of": "8144953", "ident": "MAV 330", "cliente": "YPF", "loc": "LAN PTC #1", "desc": "MC 1E G3508 JGT2 - AER105 // (KG-602)", "pct": 69.9, "despacho": "16/10/2026", "faltantes": "MONTAJE DE SCRUBBERS Y BOTELLONES", "estado": "MONTAJE DE BOTELLONES Y SOPORTES DE SKID", "comentario": "6/11 DESPACHO", "max_atraso": 91, "tareas": [{"tarea": "HORMIGONADO / SKID", "plan": "23/07/2026", "actualizada": "14/08/2026", "real": "14/08/2026", "atraso": 22}, {"tarea": "MONTAJE COMPRESOR", "plan": "05/08/2026", "actualizada": "02/09/2026", "real": "02/09/2026", "atraso": 28}, {"tarea": "MONTAJE MOTOR", "plan": "12/08/2026", "actualizada": "14/09/2026", "real": "14/09/2026", "atraso": 33}, {"tarea": "MONTAJE COOLER / AEROREFRIGERADOR", "plan": "19/08/2026", "actualizada": "18/11/2026", "real": "-", "atraso": 91}, {"tarea": "PIPING PROCESO / GAS", "plan": "26/08/2026", "actualizada": "28/09/2026", "real": "-", "atraso": 33}, {"tarea": "PIPING AGUA / ACEITE / AIRE", "plan": "02/09/2026", "actualizada": "05/10/2026", "real": "-", "atraso": 33}, {"tarea": "MONTAJE BOTELLONES / SCRUBBERS", "plan": "09/09/2026", "actualizada": "12/10/2026", "real": "-", "atraso": 33}, {"tarea": "MONTAJE ESCAPE", "plan": "16/09/2026", "actualizada": "19/10/2026", "real": "-", "atraso": 33}, {"tarea": "ALINEACIÓN MOTOR / COMPRESOR", "plan": "23/09/2026", "actualizada": "26/10/2026", "real": "-", "atraso": 33}, {"tarea": "MONTAJE ELÉCTRICO / INSTRUMENTACIÓN", "plan": "30/09/2026", "actualizada": "02/11/2026", "real": "-", "atraso": 33}, {"tarea": "PRUEBAS NEUMÁTICAS / HIDROSTÁTICAS", "plan": "05/10/2026", "actualizada": "06/11/2026", "real": "-", "atraso": 32}, {"tarea": "PINTURA FINAL", "plan": "09/10/2026", "actualizada": "10/11/2026", "real": "-", "atraso": 32}, {"tarea": "FAT / PRECOMISIONADO", "plan": "13/10/2026", "actualizada": "13/11/2026", "real": "-", "atraso": 31}, {"tarea": "DESPACHO", "plan": "16/10/2026", "actualizada": "17/11/2026", "real": "-", "atraso": 32}]}, {"id": "mc_8145033", "of": "8145033", "ident": "MAV 326", "cliente": "YPF", "loc": "LA ANGOSTURA NORTE#3", "desc": "MC 3E G3616 KBC6 - AER109 // (KG-203)", "pct": 80.82, "despacho": "23/10/2026", "faltantes": "MONTAJE DE ESCAPE", "estado": "MONTAJE DE TRAMOS EN SKID", "comentario": "29-30/10 FAT CON YPF", "max_atraso": 0, "tareas": [{"tarea": "FABRICACIÓN Y MONTAJE GENERAL", "plan": "23/10/2026", "actualizada": "23/10/2026", "real": "MONTAJE DE TRAMOS EN SKID", "atraso": 0}, {"tarea": "DESPACHO", "plan": "23/10/2026", "actualizada": "30/10/2026", "real": "-", "atraso": 0}]}, {"id": "mc_8144584", "of": "8144584", "ident": "MAV 327", "cliente": "YPF", "loc": "LA ANGOSTURA NORTE#4", "desc": "MC 1E G3508 JGT2 - AER105 // (KG-602)", "pct": 64.16, "despacho": "30/10/2026", "faltantes": "ALINEACIÓN DE MOTOR", "estado": "GROUTEO DE COMPRESOR", "comentario": "-", "max_atraso": 50, "tareas": [{"tarea": "HORMIGONADO / SKID", "plan": "01/09/2026", "actualizada": "08/09/2026", "real": "08/09/2026", "atraso": 7}, {"tarea": "MONTAJE COMPRESOR", "plan": "08/09/2026", "actualizada": "18/09/2026", "real": "18/09/2026", "atraso": 10}, {"tarea": "MONTAJE MOTOR", "plan": "11/09/2026", "actualizada": "24/09/2026", "real": "24/09/2026", "atraso": 13}, {"tarea": "MONTAJE COOLER / AEROREFRIGERADOR", "plan": "15/09/2026", "actualizada": "01/10/2026", "real": "01/10/2026", "atraso": 16}, {"tarea": "PIPING PROCESO / GAS", "plan": "18/09/2026", "actualizada": "09/10/2026", "real": "-", "atraso": 21}, {"tarea": "PIPING AGUA / ACEITE / AIRE", "plan": "21/09/2026", "actualizada": "15/10/2026", "real": "-", "atraso": 24}, {"tarea": "MONTAJE BOTELLONES / SCRUBBERS", "plan": "23/09/2026", "actualizada": "12/11/2026", "real": "-", "atraso": 50}, {"tarea": "MONTAJE ESCAPE", "plan": "25/09/2026", "actualizada": "26/10/2026", "real": "-", "atraso": 31}, {"tarea": "ALINEACIÓN MOTOR / COMPRESOR", "plan": "28/09/2026", "actualizada": "30/10/2026", "real": "-", "atraso": 32}, {"tarea": "MONTAJE ELÉCTRICO / INSTRUMENTACIÓN", "plan": "05/10/2026", "actualizada": "06/11/2026", "real": "-", "atraso": 32}, {"tarea": "PRUEBAS NEUMÁTICAS / HIDROSTÁTICAS", "plan": "12/10/2026", "actualizada": "13/11/2026", "real": "-", "atraso": 32}, {"tarea": "PINTURA FINAL", "plan": "19/10/2026", "actualizada": "18/11/2026", "real": "-", "atraso": 30}, {"tarea": "FAT / PRECOMISIONADO", "plan": "26/10/2026", "actualizada": "20/11/2026", "real": "-", "atraso": 25}, {"tarea": "DESPACHO", "plan": "30/10/2026", "actualizada": "24/11/2026", "real": "-", "atraso": 25}]}, {"id": "mc_8144585", "of": "8144585", "ident": "MAV 328", "cliente": "YPF", "loc": "LA ANGOSTURA NORTE#5", "desc": "MC 3E G3616 KBC6 - AER109 // (KG-206)", "pct": 32.0, "despacho": "20/11/2026", "faltantes": "-", "estado": "-", "comentario": "06/10 COMIENZARÍA HORMIGONADO DE SKID", "max_atraso": 15, "tareas": [{"tarea": "HORMIGONADO / SKID", "plan": "06/10/2026", "actualizada": "06/10/2026", "real": "06/10/2026", "atraso": 0}, {"tarea": "MONTAJE COMPRESOR", "plan": "13/10/2026", "actualizada": "15/10/2026", "real": "15/10/2026", "atraso": 2}, {"tarea": "MONTAJE MOTOR", "plan": "19/10/2026", "actualizada": "22/10/2026", "real": "22/10/2026", "atraso": 3}, {"tarea": "MONTAJE COOLER / AEROREFRIGERADOR", "plan": "23/10/2026", "actualizada": "29/10/2026", "real": "-", "atraso": 6}, {"tarea": "PIPING PROCESO / GAS", "plan": "28/10/2026", "actualizada": "05/11/2026", "real": "-", "atraso": 8}, {"tarea": "PIPING AGUA / ACEITE / AIRE", "plan": "30/10/2026", "actualizada": "10/11/2026", "real": "-", "atraso": 11}, {"tarea": "MONTAJE BOTELLONES / SCRUBBERS", "plan": "03/11/2026", "actualizada": "13/11/2026", "real": "-", "atraso": 10}, {"tarea": "MONTAJE ESCAPE", "plan": "05/11/2026", "actualizada": "17/11/2026", "real": "-", "atraso": 12}, {"tarea": "ALINEACIÓN MOTOR / COMPRESOR", "plan": "09/11/2026", "actualizada": "20/11/2026", "real": "-", "atraso": 11}, {"tarea": "MONTAJE ELÉCTRICO / INSTRUMENTACIÓN", "plan": "11/11/2026", "actualizada": "25/11/2026", "real": "-", "atraso": 14}, {"tarea": "PRUEBAS NEUMÁTICAS / HIDROSTÁTICAS", "plan": "13/11/2026", "actualizada": "28/11/2026", "real": "-", "atraso": 15}, {"tarea": "PINTURA FINAL", "plan": "16/11/2026", "actualizada": "01/12/2026", "real": "-", "atraso": 15}, {"tarea": "FAT / PRECOMISIONADO", "plan": "18/11/2026", "actualizada": "04/12/2026", "real": "-", "atraso": 16}, {"tarea": "DESPACHO", "plan": "20/11/2026", "actualizada": "07/12/2026", "real": "-", "atraso": 17}]}, {"id": "mc_8144586", "of": "8144586", "ident": "MAV 329", "cliente": "YPF", "loc": "LA ANGOSTURA NORTE#6", "desc": "MC 3E G3616 KBC6 - AER109 // (KG-206)", "pct": 21.71, "despacho": "27/11/2026", "faltantes": "-", "estado": "-", "comentario": "13/10 COMIENZARÍA HORMIGONADO DE SKID", "max_atraso": 8, "tareas": [{"tarea": "HORMIGONADO / SKID", "plan": "13/10/2026", "actualizada": "13/10/2026", "real": "13/10/2026", "atraso": 0}, {"tarea": "MONTAJE COMPRESOR", "plan": "20/10/2026", "actualizada": "21/10/2026", "real": "21/10/2026", "atraso": 1}, {"tarea": "MONTAJE MOTOR", "plan": "26/10/2026", "actualizada": "28/10/2026", "real": "-", "atraso": 2}, {"tarea": "MONTAJE COOLER / AEROREFRIGERADOR", "plan": "30/10/2026", "actualizada": "03/11/2026", "real": "-", "atraso": 4}, {"tarea": "PIPING PROCESO / GAS", "plan": "04/11/2026", "actualizada": "09/11/2026", "real": "-", "atraso": 5}, {"tarea": "PIPING AGUA / ACEITE / AIRE", "plan": "06/11/2026", "actualizada": "12/11/2026", "real": "-", "atraso": 6}, {"tarea": "MONTAJE BOTELLONES / SCRUBBERS", "plan": "10/11/2026", "actualizada": "16/11/2026", "real": "-", "atraso": 6}, {"tarea": "MONTAJE ESCAPE", "plan": "12/11/2026", "actualizada": "19/11/2026", "real": "-", "atraso": 7}, {"tarea": "ALINEACIÓN MOTOR / COMPRESOR", "plan": "16/11/2026", "actualizada": "24/11/2026", "real": "-", "atraso": 8}, {"tarea": "MONTAJE ELÉCTRICO / INSTRUMENTACIÓN", "plan": "18/11/2026", "actualizada": "26/11/2026", "real": "-", "atraso": 8}, {"tarea": "PRUEBAS NEUMÁTICAS / HIDROSTÁTICAS", "plan": "20/11/2026", "actualizada": "01/12/2026", "real": "-", "atraso": 11}, {"tarea": "PINTURA FINAL", "plan": "23/11/2026", "actualizada": "04/12/2026", "real": "-", "atraso": 11}, {"tarea": "FAT / PRECOMISIONADO", "plan": "25/11/2026", "actualizada": "09/12/2026", "real": "-", "atraso": 14}, {"tarea": "DESPACHO", "plan": "27/11/2026", "actualizada": "11/12/2026", "real": "-", "atraso": 14}]}, {"id": "mc_8144871", "of": "8144871", "ident": "MAV 320", "cliente": "YPF", "loc": "LCCE4 #3", "desc": "MC 3E G3608 KBC4 - AER108 // (KG-443)", "pct": 24.6, "despacho": "04/12/2026", "faltantes": "-", "estado": "-", "comentario": "16/10 COMIENZARÍA HORMIGONADO DE SKID", "max_atraso": 5, "tareas": [{"tarea": "HORMIGONADO / SKID", "plan": "18/09/2026", "actualizada": "18/09/2026", "real": "18/09/2026", "atraso": 0}, {"tarea": "MONTAJE COMPRESOR", "plan": "28/09/2026", "actualizada": "01/10/2026", "real": "01/10/2026", "atraso": 3}, {"tarea": "MONTAJE MOTOR", "plan": "05/10/2026", "actualizada": "10/10/2026", "real": "-", "atraso": 5}, {"tarea": "MONTAJE COOLER / AEROREFRIGERADOR", "plan": "12/10/2026", "actualizada": "17/10/2026", "real": "-", "atraso": 5}, {"tarea": "PIPING PROCESO / GAS", "plan": "19/10/2026", "actualizada": "24/10/2026", "real": "-", "atraso": 5}, {"tarea": "PIPING AGUA / ACEITE / AIRE", "plan": "23/10/2026", "actualizada": "28/10/2026", "real": "-", "atraso": 5}, {"tarea": "MONTAJE BOTELLONES / SCRUBBERS", "plan": "28/10/2026", "actualizada": "02/11/2026", "real": "-", "atraso": 5}, {"tarea": "MONTAJE ESCAPE", "plan": "02/11/2026", "actualizada": "07/11/2026", "real": "-", "atraso": 5}, {"tarea": "ALINEACIÓN MOTOR / COMPRESOR", "plan": "06/11/2026", "actualizada": "11/11/2026", "real": "-", "atraso": 5}, {"tarea": "MONTAJE ELÉCTRICO / INSTRUMENTACIÓN", "plan": "11/11/2026", "actualizada": "16/11/2026", "real": "-", "atraso": 5}, {"tarea": "PRUEBAS NEUMÁTICAS / HIDROSTÁTICAS", "plan": "16/11/2026", "actualizada": "21/11/2026", "real": "-", "atraso": 5}, {"tarea": "PINTURA FINAL", "plan": "20/11/2026", "actualizada": "25/11/2026", "real": "-", "atraso": 5}, {"tarea": "FAT / PRECOMISIONADO", "plan": "27/11/2026", "actualizada": "01/12/2026", "real": "-", "atraso": 4}, {"tarea": "DESPACHO", "plan": "04/12/2026", "actualizada": "04/12/2026", "real": "-", "atraso": 0}]}, {"id": "mc_8144872", "of": "8144872", "ident": "MAV 321", "cliente": "YPF", "loc": "LCCE4 #4", "desc": "MC 3E G3608 KBC4 - AER108 // (KG-444)", "pct": 18.31, "despacho": "11/12/2026", "faltantes": "-", "estado": "-", "comentario": "22/10 COMIENZARÍA HORMIGONADO DE SKID", "max_atraso": 0, "tareas": [{"tarea": "HORMIGONADO / SKID", "plan": "28/09/2026", "actualizada": "28/09/2026", "real": "28/09/2026", "atraso": 0}, {"tarea": "MONTAJE COMPRESOR", "plan": "08/10/2026", "actualizada": "08/10/2026", "real": "08/10/2026", "atraso": 0}, {"tarea": "MONTAJE MOTOR", "plan": "15/10/2026", "actualizada": "15/10/2026", "real": "-", "atraso": 0}, {"tarea": "MONTAJE COOLER / AEROREFRIGERADOR", "plan": "22/10/2026", "actualizada": "22/10/2026", "real": "-", "atraso": 0}, {"tarea": "PIPING PROCESO / GAS", "plan": "29/10/2026", "actualizada": "29/10/2026", "real": "-", "atraso": 0}, {"tarea": "PIPING AGUA / ACEITE / AIRE", "plan": "02/11/2026", "actualizada": "02/11/2026", "real": "-", "atraso": 0}, {"tarea": "MONTAJE BOTELLONES / SCRUBBERS", "plan": "06/11/2026", "actualizada": "06/11/2026", "real": "-", "atraso": 0}, {"tarea": "MONTAJE ESCAPE", "plan": "11/11/2026", "actualizada": "11/11/2026", "real": "-", "atraso": 0}, {"tarea": "ALINEACIÓN MOTOR / COMPRESOR", "plan": "16/11/2026", "actualizada": "16/11/2026", "real": "-", "atraso": 0}, {"tarea": "MONTAJE ELÉCTRICO / INSTRUMENTACIÓN", "plan": "20/11/2026", "actualizada": "20/11/2026", "real": "-", "atraso": 0}, {"tarea": "PRUEBAS NEUMÁTICAS / HIDROSTÁTICAS", "plan": "25/11/2026", "actualizada": "25/11/2026", "real": "-", "atraso": 0}, {"tarea": "PINTURA FINAL", "plan": "30/11/2026", "actualizada": "30/11/2026", "real": "-", "atraso": 0}, {"tarea": "FAT / PRECOMISIONADO", "plan": "04/12/2026", "actualizada": "04/12/2026", "real": "-", "atraso": 0}, {"tarea": "DESPACHO", "plan": "11/12/2026", "actualizada": "11/12/2026", "real": "-", "atraso": 0}]}, {"id": "mc_8144235", "of": "8144235", "ident": "MAV 317", "cliente": "CHEVRON", "loc": "EL TRAPIAL #6 NAN392", "desc": "MC 1E G3508 JGT2 - AER105 // (KG-602)", "pct": 43.08, "despacho": "18/12/2026", "faltantes": "-", "estado": "-", "comentario": "02/11 COMIENZARÍA HORMIGONADO DE SKID", "max_atraso": 0, "tareas": [{"tarea": "HORMIGONADO / SKID", "plan": "11/09/2026", "actualizada": "11/09/2026", "real": "11/09/2026", "atraso": 0}, {"tarea": "MONTAJE COMPRESOR", "plan": "21/09/2026", "actualizada": "21/09/2026", "real": "21/09/2026", "atraso": 0}, {"tarea": "MONTAJE MOTOR", "plan": "28/09/2026", "actualizada": "28/09/2026", "real": "28/09/2026", "atraso": 0}, {"tarea": "MONTAJE COOLER / AEROREFRIGERADOR", "plan": "05/10/2026", "actualizada": "05/10/2026", "real": "05/10/2026", "atraso": 0}, {"tarea": "PIPING PROCESO / GAS", "plan": "13/10/2026", "actualizada": "13/10/2026", "real": "13/10/2026", "atraso": 0}, {"tarea": "PIPING AGUA / ACEITE / AIRE", "plan": "20/10/2026", "actualizada": "20/10/2026", "real": "-", "atraso": 0}, {"tarea": "MONTAJE BOTELLONES / SCRUBBERS", "plan": "27/10/2026", "actualizada": "27/10/2026", "real": "-", "atraso": 0}, {"tarea": "MONTAJE ESCAPE", "plan": "03/11/2026", "actualizada": "03/11/2026", "real": "-", "atraso": 0}, {"tarea": "ALINEACIÓN MOTOR / COMPRESOR", "plan": "10/11/2026", "actualizada": "10/11/2026", "real": "-", "atraso": 0}, {"tarea": "MONTAJE ELÉCTRICO / INSTRUMENTACIÓN", "plan": "17/11/2026", "actualizada": "17/11/2026", "real": "-", "atraso": 0}, {"tarea": "PRUEBAS NEUMÁTICAS / HIDROSTÁTICAS", "plan": "24/11/2026", "actualizada": "24/11/2026", "real": "-", "atraso": 0}, {"tarea": "PINTURA FINAL", "plan": "04/12/2026", "actualizada": "04/12/2026", "real": "-", "atraso": 0}, {"tarea": "FAT / PRECOMISIONADO", "plan": "11/12/2026", "actualizada": "11/12/2026", "real": "-", "atraso": 0}, {"tarea": "DESPACHO", "plan": "18/12/2026", "actualizada": "18/12/2026", "real": "-", "atraso": 0}]}], "generacion": [{"id": "gen_8142751", "of": "8142751", "ident": "Radiador J420 - PAE APO", "cliente": "PAE APO", "pct": 61.0, "despacho": "07/12/2026", "max_atraso": 0, "tareas": [{"tarea": "Fabricación estructura", "plan": "OK", "actualizada": "OK", "real": "OK", "atraso": 0}, {"tarea": "Fabricación cabezal", "plan": "OK", "actualizada": "OK", "real": "OK", "atraso": 0}, {"tarea": "Mecanizado del cabezal", "plan": "OK", "actualizada": "OK", "real": "OK", "atraso": 0}, {"tarea": "Galvanizado", "plan": "20/11/2026", "actualizada": "20/11/2026", "real": "-", "atraso": 0}, {"tarea": "Mecanizado placa porta tubo", "plan": "18/11/2026", "actualizada": "18/11/2026", "real": "-", "atraso": 0}, {"tarea": "Armado del bastidor", "plan": "23/11/2026", "actualizada": "23/11/2026", "real": "-", "atraso": 0}, {"tarea": "Forzadores", "plan": "26/11/2026", "actualizada": "26/11/2026", "real": "-", "atraso": 0}, {"tarea": "Caños aletados", "plan": "OK", "actualizada": "OK", "real": "OK", "atraso": 0}, {"tarea": "Armado de mazos", "plan": "25/11/2026", "actualizada": "25/11/2026", "real": "-", "atraso": 0}, {"tarea": "Terminado", "plan": "07/12/2026", "actualizada": "07/12/2026", "real": "-", "atraso": 0}]}, {"id": "gen_8142752", "of": "8142752", "ident": "Radiador J420 - PAE APO", "cliente": "PAE APO", "pct": 61.0, "despacho": "07/12/2026", "max_atraso": 0, "tareas": [{"tarea": "Fabricación estructura", "plan": "OK", "actualizada": "OK", "real": "OK", "atraso": 0}, {"tarea": "Fabricación cabezal", "plan": "OK", "actualizada": "OK", "real": "OK", "atraso": 0}, {"tarea": "Mecanizado del cabezal", "plan": "OK", "actualizada": "OK", "real": "OK", "atraso": 0}, {"tarea": "Galvanizado", "plan": "20/11/2026", "actualizada": "20/11/2026", "real": "-", "atraso": 0}, {"tarea": "Mecanizado placa porta tubo", "plan": "18/11/2026", "actualizada": "18/11/2026", "real": "-", "atraso": 0}, {"tarea": "Armado del bastidor", "plan": "23/11/2026", "actualizada": "23/11/2026", "real": "-", "atraso": 0}, {"tarea": "Forzadores", "plan": "26/11/2026", "actualizada": "26/11/2026", "real": "-", "atraso": 0}, {"tarea": "Caños aletados", "plan": "OK", "actualizada": "OK", "real": "OK", "atraso": 0}, {"tarea": "Armado de mazos", "plan": "25/11/2026", "actualizada": "25/11/2026", "real": "-", "atraso": 0}, {"tarea": "Terminado", "plan": "07/12/2026", "actualizada": "07/12/2026", "real": "-", "atraso": 0}]}, {"id": "gen_8142753", "of": "8142753", "ident": "Radiador J420 - PAE APO", "cliente": "PAE APO", "pct": 61.0, "despacho": "14/12/2026", "max_atraso": 0, "tareas": [{"tarea": "Fabricación estructura", "plan": "OK", "actualizada": "OK", "real": "OK", "atraso": 0}, {"tarea": "Fabricación cabezal", "plan": "OK", "actualizada": "OK", "real": "OK", "atraso": 0}, {"tarea": "Mecanizado del cabezal", "plan": "OK", "actualizada": "OK", "real": "OK", "atraso": 0}, {"tarea": "Galvanizado", "plan": "20/11/2026", "actualizada": "20/11/2026", "real": "-", "atraso": 0}, {"tarea": "Mecanizado placa porta tubo", "plan": "18/11/2026", "actualizada": "18/11/2026", "real": "-", "atraso": 0}, {"tarea": "Armado del bastidor", "plan": "23/11/2026", "actualizada": "23/11/2026", "real": "-", "atraso": 0}, {"tarea": "Forzadores", "plan": "26/11/2026", "actualizada": "26/11/2026", "real": "-", "atraso": 0}, {"tarea": "Caños aletados", "plan": "OK", "actualizada": "OK", "real": "OK", "atraso": 0}, {"tarea": "Armado de mazos", "plan": "25/11/2026", "actualizada": "25/11/2026", "real": "-", "atraso": 0}, {"tarea": "Terminado", "plan": "14/12/2026", "actualizada": "14/12/2026", "real": "-", "atraso": 0}]}, {"id": "gen_8142754", "of": "8142754", "ident": "Radiador J420 - PAE APO", "cliente": "PAE APO", "pct": 48.0, "despacho": "14/12/2026", "max_atraso": 0, "tareas": [{"tarea": "Fabricación estructura", "plan": "OK", "actualizada": "OK", "real": "OK", "atraso": 0}, {"tarea": "Fabricación cabezal", "plan": "OK", "actualizada": "OK", "real": "OK", "atraso": 0}, {"tarea": "Mecanizado del cabezal", "plan": "13/11/2026", "actualizada": "13/11/2026", "real": "-", "atraso": 0}, {"tarea": "Galvanizado", "plan": "23/11/2026", "actualizada": "23/11/2026", "real": "-", "atraso": 0}, {"tarea": "Mecanizado placa porta tubo", "plan": "23/11/2026", "actualizada": "23/11/2026", "real": "-", "atraso": 0}, {"tarea": "Armado del bastidor", "plan": "25/11/2026", "actualizada": "25/11/2026", "real": "-", "atraso": 0}, {"tarea": "Forzadores", "plan": "02/12/2026", "actualizada": "02/12/2026", "real": "-", "atraso": 0}, {"tarea": "Caños aletados", "plan": "25/11/2026", "actualizada": "25/11/2026", "real": "-", "atraso": 0}, {"tarea": "Armado de mazos", "plan": "30/11/2026", "actualizada": "30/11/2026", "real": "-", "atraso": 0}, {"tarea": "Terminado", "plan": "14/12/2026", "actualizada": "14/12/2026", "real": "-", "atraso": 0}]}, {"id": "gen_8142755", "of": "8142755", "ident": "Radiador J420 - PAE APO", "cliente": "PAE APO", "pct": 48.0, "despacho": "21/12/2026", "max_atraso": 0, "tareas": [{"tarea": "Fabricación estructura", "plan": "OK", "actualizada": "OK", "real": "OK", "atraso": 0}, {"tarea": "Fabricación cabezal", "plan": "OK", "actualizada": "OK", "real": "OK", "atraso": 0}, {"tarea": "Mecanizado del cabezal", "plan": "13/11/2026", "actualizada": "13/11/2026", "real": "-", "atraso": 0}, {"tarea": "Galvanizado", "plan": "23/11/2026", "actualizada": "23/11/2026", "real": "-", "atraso": 0}, {"tarea": "Mecanizado placa porta tubo", "plan": "23/11/2026", "actualizada": "23/11/2026", "real": "-", "atraso": 0}, {"tarea": "Armado del bastidor", "plan": "25/11/2026", "actualizada": "25/11/2026", "real": "-", "atraso": 0}, {"tarea": "Forzadores", "plan": "02/12/2026", "actualizada": "02/12/2026", "real": "-", "atraso": 0}, {"tarea": "Caños aletados", "plan": "25/11/2026", "actualizada": "25/11/2026", "real": "-", "atraso": 0}, {"tarea": "Armado de mazos", "plan": "07/12/2026", "actualizada": "07/12/2026", "real": "-", "atraso": 0}, {"tarea": "Terminado", "plan": "21/12/2026", "actualizada": "21/12/2026", "real": "-", "atraso": 0}]}, {"id": "gen_8142756", "of": "8142756", "ident": "Radiador J420 - PAE APO", "cliente": "PAE APO", "pct": 41.5, "despacho": "21/12/2026", "max_atraso": 0, "tareas": [{"tarea": "Fabricación estructura", "plan": "OK", "actualizada": "OK", "real": "OK", "atraso": 0}, {"tarea": "Fabricación cabezal", "plan": "11/11/2026", "actualizada": "11/11/2026", "real": "-", "atraso": 0}, {"tarea": "Mecanizado del cabezal", "plan": "13/11/2026", "actualizada": "13/11/2026", "real": "-", "atraso": 0}, {"tarea": "Galvanizado", "plan": "23/11/2026", "actualizada": "23/11/2026", "real": "-", "atraso": 0}, {"tarea": "Mecanizado placa porta tubo", "plan": "23/11/2026", "actualizada": "23/11/2026", "real": "-", "atraso": 0}, {"tarea": "Armado del bastidor", "plan": "25/11/2026", "actualizada": "25/11/2026", "real": "-", "atraso": 0}, {"tarea": "Forzadores", "plan": "02/12/2026", "actualizada": "02/12/2026", "real": "-", "atraso": 0}, {"tarea": "Caños aletados", "plan": "25/11/2026", "actualizada": "25/11/2026", "real": "-", "atraso": 0}, {"tarea": "Armado de mazos", "plan": "07/12/2026", "actualizada": "07/12/2026", "real": "-", "atraso": 0}, {"tarea": "Terminado", "plan": "21/12/2026", "actualizada": "21/12/2026", "real": "-", "atraso": 0}]}, {"id": "gen_8142757", "of": "8142757", "ident": "Radiador J420 - CGC", "cliente": "CGC", "pct": 48.0, "despacho": "28/12/2026", "max_atraso": 0, "tareas": [{"tarea": "Fabricación estructura", "plan": "OK", "actualizada": "OK", "real": "OK", "atraso": 0}, {"tarea": "Fabricación cabezal", "plan": "OK", "actualizada": "OK", "real": "OK", "atraso": 0}, {"tarea": "Mecanizado del cabezal", "plan": "25/11/2026", "actualizada": "25/11/2026", "real": "-", "atraso": 0}, {"tarea": "Galvanizado", "plan": "30/11/2026", "actualizada": "30/11/2026", "real": "-", "atraso": 0}, {"tarea": "Mecanizado placa porta tubo", "plan": "30/11/2026", "actualizada": "30/11/2026", "real": "-", "atraso": 0}, {"tarea": "Armado del bastidor", "plan": "04/12/2026", "actualizada": "04/12/2026", "real": "-", "atraso": 0}, {"tarea": "Forzadores", "plan": "11/12/2026", "actualizada": "11/12/2026", "real": "-", "atraso": 0}, {"tarea": "Caños aletados", "plan": "04/12/2026", "actualizada": "04/12/2026", "real": "-", "atraso": 0}, {"tarea": "Armado de mazos", "plan": "14/12/2026", "actualizada": "14/12/2026", "real": "-", "atraso": 0}, {"tarea": "Terminado", "plan": "28/12/2026", "actualizada": "28/12/2026", "real": "-", "atraso": 0}]}, {"id": "gen_8142758", "of": "8142758", "ident": "Radiador J420 - MAR DE AJÓ", "cliente": "MAR DE AJÓ", "pct": 48.0, "despacho": "28/12/2026", "max_atraso": 0, "tareas": [{"tarea": "Fabricación estructura", "plan": "OK", "actualizada": "OK", "real": "OK", "atraso": 0}, {"tarea": "Fabricación cabezal", "plan": "OK", "actualizada": "OK", "real": "OK", "atraso": 0}, {"tarea": "Mecanizado del cabezal", "plan": "25/11/2026", "actualizada": "25/11/2026", "real": "-", "atraso": 0}, {"tarea": "Galvanizado", "plan": "30/11/2026", "actualizada": "30/11/2026", "real": "-", "atraso": 0}, {"tarea": "Mecanizado placa porta tubo", "plan": "30/11/2026", "actualizada": "30/11/2026", "real": "-", "atraso": 0}, {"tarea": "Armado del bastidor", "plan": "04/12/2026", "actualizada": "04/12/2026", "real": "-", "atraso": 0}, {"tarea": "Forzadores", "plan": "11/12/2026", "actualizada": "11/12/2026", "real": "-", "atraso": 0}, {"tarea": "Caños aletados", "plan": "04/12/2026", "actualizada": "04/12/2026", "real": "-", "atraso": 0}, {"tarea": "Armado de mazos", "plan": "14/12/2026", "actualizada": "14/12/2026", "real": "-", "atraso": 0}, {"tarea": "Terminado", "plan": "28/12/2026", "actualizada": "28/12/2026", "real": "-", "atraso": 0}]}, {"id": "gen_8142759", "of": "8142759", "ident": "Radiador J420 - MAR DE AJÓ", "cliente": "MAR DE AJÓ", "pct": 0.0, "despacho": "-", "max_atraso": 0, "tareas": [{"tarea": "Fabricación estructura", "plan": "-", "actualizada": "-", "real": "-", "atraso": 0}, {"tarea": "Terminado", "plan": "-", "actualizada": "-", "real": "-", "atraso": 0}]}, {"id": "gen_8142760", "of": "8142760", "ident": "Radiador J420 - MAR DE AJÓ", "cliente": "MAR DE AJÓ", "pct": 0.0, "despacho": "-", "max_atraso": 0, "tareas": [{"tarea": "Fabricación estructura", "plan": "-", "actualizada": "-", "real": "-", "atraso": 0}, {"tarea": "Terminado", "plan": "-", "actualizada": "-", "real": "-", "atraso": 0}]}, {"id": "gen_8142761", "of": "8142761", "ident": "Radiador J420 - MAR DE AJÓ", "cliente": "MAR DE AJÓ", "pct": 0.0, "despacho": "-", "max_atraso": 0, "tareas": [{"tarea": "Fabricación estructura", "plan": "-", "actualizada": "-", "real": "-", "atraso": 0}, {"tarea": "Terminado", "plan": "-", "actualizada": "-", "real": "-", "atraso": 0}]}, {"id": "gen_8142762", "of": "8142762", "ident": "Radiador J420 - STOCK", "cliente": "STOCK", "pct": 0.0, "despacho": "-", "max_atraso": 0, "tareas": [{"tarea": "Fabricación estructura", "plan": "-", "actualizada": "-", "real": "-", "atraso": 0}, {"tarea": "Terminado", "plan": "-", "actualizada": "-", "real": "-", "atraso": 0}]}, {"id": "gen_8142763", "of": "8142763", "ident": "Radiador J420 - STOCK", "cliente": "STOCK", "pct": 0.0, "despacho": "-", "max_atraso": 0, "tareas": [{"tarea": "Fabricación estructura", "plan": "-", "actualizada": "-", "real": "-", "atraso": 0}, {"tarea": "Terminado", "plan": "-", "actualizada": "-", "real": "-", "atraso": 0}]}, {"id": "gen_8142897", "of": "8142897", "ident": "SKID P/SIST. FILTRADO GAS S/P 13306 AS", "cliente": "FILTRADO GAS", "pct": 100.0, "despacho": "10/12/2026", "max_atraso": 0, "tareas": [{"tarea": "Ingeniería y compras", "plan": "30/11/2026", "actualizada": "30/11/2026", "real": "30/11/2026", "atraso": 0}, {"tarea": "Fabricación skid y recipientes", "plan": "04/12/2026", "actualizada": "04/12/2026", "real": "04/12/2026", "atraso": 0}, {"tarea": "Montaje piping y válvulas", "plan": "07/12/2026", "actualizada": "07/12/2026", "real": "07/12/2026", "atraso": 0}, {"tarea": "Pruebas y liberación", "plan": "09/12/2026", "actualizada": "09/12/2026", "real": "09/12/2026", "atraso": 0}, {"tarea": "Despacho", "plan": "10/12/2026", "actualizada": "10/12/2026", "real": "10/12/2026", "atraso": 0}]}], "externos": [{"id": "ext_13356", "of": "13356", "ident": "13356 SKID SACDE", "cliente": "SACDE", "pct": 100.0, "despacho": "04/12/2026", "max_atraso": 4, "tareas": [{"tarea": "MONTAJE PIPING Y VALVULAS", "plan": "26/08-31/08", "actualizada": "19/10-22/10", "real": "06/11/2026", "atraso": 4}, {"tarea": "ENSAMBLE FINAL", "plan": "09/09-11/09", "actualizada": "30/10-03/11", "real": "06/11/2026", "atraso": 0}, {"tarea": "CONEXIONADO ELÉTRICO", "plan": "10/09-14/09", "actualizada": "02/11-04/11", "real": "11/11/2026", "atraso": 0}, {"tarea": "AISLACIÓN", "plan": "14/09-16/09", "actualizada": "04/11-06/11", "real": "26/11-28/11", "atraso": 0}, {"tarea": "PRUEBA INTERNA", "plan": "-", "actualizada": "-", "real": "18/11/2026", "atraso": 0}, {"tarea": "PRUEBA NEUMATICA", "plan": "-", "actualizada": "-", "real": "25/11/2026", "atraso": 0}, {"tarea": "PRUEBA PRECOMISIONADO (FAT)", "plan": "16/09-17/09", "actualizada": "06/11-09/11", "real": "25/11/2026", "atraso": 0}, {"tarea": "LIBERACIÓN", "plan": "17/09/2026", "actualizada": "09/11/2026", "real": "30/11/2026", "atraso": 0}, {"tarea": "ALISTAMIENTO PARA DESPACHO", "plan": "17/09-18/09", "actualizada": "09/11-10/11", "real": "01/12-03/12", "atraso": 0}, {"tarea": "Despacho", "plan": "21/09/2026", "actualizada": "11/11/2026", "real": "04/12/2026", "atraso": 0}]}, {"id": "ext_13357", "of": "13357", "ident": "13357 SKID SACDE", "cliente": "SACDE", "pct": 100.0, "despacho": "04/12/2026", "max_atraso": 0, "tareas": [{"tarea": "MONTAJE PIPING Y VALVULAS", "plan": "04/09-09/09", "actualizada": "26/10-29/10", "real": "11/11/2026", "atraso": 0}, {"tarea": "ENSAMBLE FINAL", "plan": "14/09-16/09", "actualizada": "03/11-05/11", "real": "11/11/2026", "atraso": 0}, {"tarea": "CONEXIONADO ELÉTRICO", "plan": "15/09-18/09", "actualizada": "04/11-06/11", "real": "18/11/2026", "atraso": 0}, {"tarea": "AISLACIÓN", "plan": "18/09-21/09", "actualizada": "06/11-09/11", "real": "27/11-30/11", "atraso": 0}, {"tarea": "PRUEBA NEUMATICA", "plan": "-", "actualizada": "-", "real": "25/11/2026", "atraso": 0}, {"tarea": "PRUEBA PRECOMISIONADO (FAT)", "plan": "22/09-23/09", "actualizada": "09/11-10/11", "real": "26/11/2026", "atraso": 0}, {"tarea": "LIBERACIÓN", "plan": "24/09/2026", "actualizada": "10/11/2026", "real": "01/12/2026", "atraso": 0}, {"tarea": "ALISTAMIENTO PARA DESPACHO", "plan": "25/09-28/09", "actualizada": "10/11-11/11", "real": "02/12-04/12", "atraso": 0}, {"tarea": "Despacho", "plan": "29/09/2026", "actualizada": "11/11/2026", "real": "04/12/2026", "atraso": 0}]}, {"id": "ext_13362", "of": "13362", "ident": "13362 SKID SACDE", "cliente": "SACDE", "pct": 100.0, "despacho": "11/12/2026", "max_atraso": 0, "tareas": [{"tarea": "MONTAJE PIPING Y VALVULAS", "plan": "27/10-30/10", "actualizada": "-", "real": "18/11/2026", "atraso": 0}, {"tarea": "ENSAMBLE FINAL", "plan": "02/11-04/11", "actualizada": "-", "real": "20/11/2026", "atraso": 0}, {"tarea": "CONEXIONADO ELÉTRICO", "plan": "03/11-05/11", "actualizada": "-", "real": "25/11/2026", "atraso": 0}, {"tarea": "AISLACIÓN", "plan": "05/11-09/11", "actualizada": "-", "real": "03/12-07/12", "atraso": 0}, {"tarea": "PRUEBA NEUMATICA", "plan": "-", "actualizada": "-", "real": "02/12/2026", "atraso": 0}, {"tarea": "PRUEBA PRECOMISIONADO (FAT)", "plan": "09/11-11/11", "actualizada": "-", "real": "03/12/2026", "atraso": 0}, {"tarea": "LIBERACIÓN", "plan": "11/11-12/11", "actualizada": "-", "real": "08/12/2026", "atraso": 0}, {"tarea": "ALISTAMIENTO PARA DESPACHO", "plan": "12/11-13/11", "actualizada": "-", "real": "09/12-10/12", "atraso": 0}, {"tarea": "Despacho", "plan": "16/11/2026", "actualizada": "-", "real": "11/12/2026", "atraso": 0}]}, {"id": "ext_13363", "of": "13363", "ident": "13363 SKID SACDE", "cliente": "SACDE", "pct": 100.0, "despacho": "11/12/2026", "max_atraso": 0, "tareas": [{"tarea": "MONTAJE PIPING Y VALVULAS", "plan": "27/10-30/10", "actualizada": "-", "real": "18/11/2026", "atraso": 0}, {"tarea": "ENSAMBLE FINAL", "plan": "02/11-04/11", "actualizada": "-", "real": "20/11/2026", "atraso": 0}, {"tarea": "CONEXIONADO ELÉTRICO", "plan": "03/11-05/11", "actualizada": "-", "real": "25/11/2026", "atraso": 0}, {"tarea": "AISLACIÓN", "plan": "05/11-09/11", "actualizada": "-", "real": "03/12-07/12", "atraso": 0}, {"tarea": "PRUEBA NEUMATICA", "plan": "-", "actualizada": "-", "real": "02/12/2026", "atraso": 0}, {"tarea": "PRUEBA PRECOMISIONADO (FAT)", "plan": "09/11-11/11", "actualizada": "-", "real": "03/12/2026", "atraso": 0}, {"tarea": "LIBERACIÓN", "plan": "11/11-12/11", "actualizada": "-", "real": "08/12/2026", "atraso": 0}, {"tarea": "ALISTAMIENTO PARA DESPACHO", "plan": "12/11-13/11", "actualizada": "-", "real": "09/12-10/12", "atraso": 0}, {"tarea": "Despacho", "plan": "16/11/2026", "actualizada": "-", "real": "11/12/2026", "atraso": 0}]}, {"id": "ext_13370", "of": "13370", "ident": "13370 SKID SACDE", "cliente": "SACDE", "pct": 0.0, "despacho": "30/11/2026", "max_atraso": 0, "tareas": [{"tarea": "MONTAJE PIPING Y VALVULAS", "plan": "10/11-13/11", "actualizada": "-", "real": "-", "atraso": 0}, {"tarea": "ENSAMBLE FINAL", "plan": "16/11-18/11", "actualizada": "-", "real": "-", "atraso": 0}, {"tarea": "CONEXIONADO ELÉTRICO", "plan": "17/11-19/11", "actualizada": "-", "real": "-", "atraso": 0}, {"tarea": "AISLACIÓN", "plan": "19/11-23/11", "actualizada": "-", "real": "-", "atraso": 0}, {"tarea": "PRUEBA NEUMATICA", "plan": "-", "actualizada": "-", "real": "-", "atraso": 0}, {"tarea": "PRUEBA PRECOMISIONADO (FAT)", "plan": "23/11-25/11", "actualizada": "-", "real": "-", "atraso": 0}, {"tarea": "LIBERACIÓN", "plan": "25/11-26/11", "actualizada": "-", "real": "-", "atraso": 0}, {"tarea": "ALISTAMIENTO PARA DESPACHO", "plan": "26/11-27/11", "actualizada": "-", "real": "-", "atraso": 0}, {"tarea": "Despacho", "plan": "30/11/2026", "actualizada": "-", "real": "-", "atraso": 0}]}, {"id": "ext_13371", "of": "13371", "ident": "13371 SKID SACDE", "cliente": "SACDE", "pct": 0.0, "despacho": "30/11/2026", "max_atraso": 0, "tareas": [{"tarea": "MONTAJE PIPING Y VALVULAS", "plan": "10/11-13/11", "actualizada": "-", "real": "-", "atraso": 0}, {"tarea": "ENSAMBLE FINAL", "plan": "16/11-18/11", "actualizada": "-", "real": "-", "atraso": 0}, {"tarea": "CONEXIONADO ELÉTRICO", "plan": "17/11-19/11", "actualizada": "-", "real": "-", "atraso": 0}, {"tarea": "AISLACIÓN", "plan": "19/11-23/11", "actualizada": "-", "real": "-", "atraso": 0}, {"tarea": "PRUEBA NEUMATICA", "plan": "-", "actualizada": "-", "real": "-", "atraso": 0}, {"tarea": "PRUEBA PRECOMISIONADO (FAT)", "plan": "23/11-25/11", "actualizada": "-", "real": "-", "atraso": 0}, {"tarea": "LIBERACIÓN", "plan": "25/11-26/11", "actualizada": "-", "real": "-", "atraso": 0}, {"tarea": "ALISTAMIENTO PARA DESPACHO", "plan": "26/11-27/11", "actualizada": "-", "real": "-", "atraso": 0}, {"tarea": "Despacho", "plan": "30/11/2026", "actualizada": "-", "real": "-", "atraso": 0}]}, {"id": "ext_8143015", "of": "8143015", "ident": "SIST. FILTRADO 8143015", "cliente": "EXTERNO", "pct": 75.0, "despacho": "26/11/2026", "max_atraso": 0, "tareas": [{"tarea": "Fabricación y armado", "plan": "23/11/2026", "actualizada": "23/11/2026", "real": "23/11/2026", "atraso": 0}, {"tarea": "Pruebas y pintura", "plan": "24/11/2026", "actualizada": "24/11/2026", "real": "24/11/2026", "atraso": 0}, {"tarea": "Liberación", "plan": "25/11/2026", "actualizada": "25/11/2026", "real": "25/11/2026", "atraso": 0}, {"tarea": "Despacho", "plan": "26/11/2026", "actualizada": "26/11/2026", "real": "-", "atraso": 0}]}, {"id": "ext_8143016", "of": "8143016", "ident": "SIST. FILTRADO 8143016", "cliente": "EXTERNO", "pct": 75.0, "despacho": "26/11/2026", "max_atraso": 0, "tareas": [{"tarea": "Fabricación y armado", "plan": "23/11/2026", "actualizada": "23/11/2026", "real": "23/11/2026", "atraso": 0}, {"tarea": "Pruebas y pintura", "plan": "24/11/2026", "actualizada": "24/11/2026", "real": "24/11/2026", "atraso": 0}, {"tarea": "Liberación", "plan": "25/11/2026", "actualizada": "25/11/2026", "real": "25/11/2026", "atraso": 0}, {"tarea": "Despacho", "plan": "26/11/2026", "actualizada": "26/11/2026", "real": "-", "atraso": 0}]}, {"id": "ext_8143017", "of": "8143017", "ident": "SIST. FILTRADO 8143017", "cliente": "EXTERNO", "pct": 100.0, "despacho": "09/12/2026", "max_atraso": 0, "tareas": [{"tarea": "Fabricación y armado", "plan": "30/11/2026", "actualizada": "30/11/2026", "real": "30/11/2026", "atraso": 0}, {"tarea": "Pruebas y pintura", "plan": "03/12/2026", "actualizada": "03/12/2026", "real": "03/12/2026", "atraso": 0}, {"tarea": "Liberación", "plan": "07/12/2026", "actualizada": "07/12/2026", "real": "07/12/2026", "atraso": 0}, {"tarea": "Despacho", "plan": "09/12/2026", "actualizada": "09/12/2026", "real": "09/12/2026", "atraso": 0}]}, {"id": "ext_8143018", "of": "8143018", "ident": "SIST. FILTRADO 8143018", "cliente": "EXTERNO", "pct": 100.0, "despacho": "09/12/2026", "max_atraso": 0, "tareas": [{"tarea": "Fabricación y armado", "plan": "30/11/2026", "actualizada": "30/11/2026", "real": "30/11/2026", "atraso": 0}, {"tarea": "Pruebas y pintura", "plan": "03/12/2026", "actualizada": "03/12/2026", "real": "03/12/2026", "atraso": 0}, {"tarea": "Liberación", "plan": "07/12/2026", "actualizada": "07/12/2026", "real": "07/12/2026", "atraso": 0}, {"tarea": "Despacho", "plan": "09/12/2026", "actualizada": "09/12/2026", "real": "09/12/2026", "atraso": 0}]}, {"id": "ext_8143019", "of": "8143019", "ident": "SIST. FILTRADO 8143019", "cliente": "EXTERNO", "pct": 100.0, "despacho": "09/12/2026", "max_atraso": 0, "tareas": [{"tarea": "Fabricación y armado", "plan": "30/11/2026", "actualizada": "30/11/2026", "real": "30/11/2026", "atraso": 0}, {"tarea": "Pruebas y pintura", "plan": "03/12/2026", "actualizada": "03/12/2026", "real": "03/12/2026", "atraso": 0}, {"tarea": "Liberación", "plan": "07/12/2026", "actualizada": "07/12/2026", "real": "07/12/2026", "atraso": 0}, {"tarea": "Despacho", "plan": "09/12/2026", "actualizada": "09/12/2026", "real": "09/12/2026", "atraso": 0}]}]};
+    const params = new URLSearchParams(window.location.search);
+    let readOnly = params.get("modo") === "ver" || params.get("view") === "gerencia";
+    let activeSector = "motocompresores";
+    let expandedIds = new Set();
+    let db = JSON.parse(JSON.stringify(INITIAL_DB));
+
+    function getSheetUrl() {
+      try {
+        return localStorage.getItem(SHEET_URL_KEY) || DEFAULT_SHEETS_CSV_URL || "";
+      } catch (e) {
+        return DEFAULT_SHEETS_CSV_URL || "";
+      }
+    }
+
+    function toast(msg) {
+      const el = document.getElementById("toast");
+      el.textContent = msg;
+      el.classList.add("show");
+      clearTimeout(window._t);
+      window._t = setTimeout(() => el.classList.remove("show"), 2500);
+    }
+
+    function toggleDropdown(e) {
+      e.stopPropagation();
+      document.getElementById("dropdown").classList.toggle("open");
+    }
+
+    document.addEventListener("click", () => {
+      const d = document.getElementById("dropdown");
+      if (d) d.classList.remove("open");
+    });
+
+    function openSheetModal() {
+      document.getElementById("sheetUrlInput").value = getSheetUrl();
+      document.getElementById("sheetModal").classList.add("open");
+    }
+
+    function closeSheetModal() {
+      document.getElementById("sheetModal").classList.remove("open");
+    }
+
+    function saveSheetUrl() {
+      const val = document.getElementById("sheetUrlInput").value.trim();
+      try { localStorage.setItem(SHEET_URL_KEY, val); } catch (e) {}
+      closeSheetModal();
+      syncFromSheets(true);
+    }
+
+    function toggleRo() {
+      readOnly = !readOnly;
+      render();
+      toast(readOnly ? "Modo Solo Lectura activado" : "Modo Edición activado");
+    }
+
+    function setSector(sec) {
+      activeSector = sec;
+      document.querySelectorAll(".tab").forEach(t => t.classList.toggle("active", t.dataset.sec === sec));
+      render();
+    }
+
+    function toggleOf(id) {
+      if (expandedIds.has(id)) expandedIds.delete(id);
+      else expandedIds.add(id);
+      renderList();
+    }
+
+    function parseCsvLine(line, sep) {
+      const out = [];
+      let cur = "";
+      let inQ = false;
+      for (let i = 0; i < line.length; i++) {
+        const ch = line[i];
+        if (ch === '"') {
+          if (inQ && line[i + 1] === '"') { cur += '"'; i++; }
+          else inQ = !inQ;
+        } else if (ch === sep && !inQ) {
+          out.push(cur.trim());
+          cur = "";
+        } else {
+          cur += ch;
+        }
+      }
+      out.push(cur.trim());
+      return out;
+    }
+
+    function normalizeSector(raw) {
+      const s = String(raw || "").toLowerCase();
+      if (s.includes("moto") || s.includes("mc")) return "motocompresores";
+      if (s.includes("gen") || s.includes("rad")) return "generacion";
+      if (s.includes("ext") || s.includes("sacde") || s.includes("filt")) return "externos";
+      return "motocompresores";
+    }
+
+    function csvToDb(csvText) {
+      const clean = csvText.replace(/^\uFEFF/, "").trim();
+      const lines = clean.split(/\r?\n/).filter(l => l.trim().length > 0);
+      if (lines.length < 2) return null;
+      const sep = lines[0].includes(";") && !lines[0].includes(",") ? ";" : ",";
+      const headers = parseCsvLine(lines[0], sep).map(h => h.toLowerCase());
+      const idx = name => headers.findIndex(h => h.includes(name));
+
+      const iSec = idx("sector");
+      const iOf = idx("of");
+      const iEq = idx("equipo");
+      const iCli = idx("cliente");
+      const iPct = idx("avance");
+      const iDesp = idx("despacho");
+      const iTar = idx("tarea");
+      const iPlan = idx("plan");
+      const iAct = idx("act");
+      const iReal = idx("real");
+      const iAtr = idx("atraso");
+
+      const grouped = { motocompresores: new Map(), generacion: new Map(), externos: new Map() };
+
+      for (let r = 1; r < lines.length; r++) {
+        const cols = parseCsvLine(lines[r], sep);
+        const ofVal = (iOf >= 0 ? cols[iOf] : "") || "";
+        if (!ofVal) continue;
+        const sec = normalizeSector(iSec >= 0 ? cols[iSec] : "motocompresores");
+        const key = sec + "_" + ofVal;
+        if (!grouped[sec].has(key)) {
+          const pctRaw = iPct >= 0 ? String(cols[iPct] || "0").replace("%", "").replace(",", ".") : "0";
+          grouped[sec].set(key, {
+            id: key,
+            of: ofVal,
+            ident: (iEq >= 0 && cols[iEq]) ? cols[iEq] : ("OF " + ofVal),
+            cliente: (iCli >= 0 && cols[iCli]) ? cols[iCli] : "-",
+            pct: Math.max(0, Math.min(100, parseFloat(pctRaw) || 0)),
+            despacho: (iDesp >= 0 && cols[iDesp]) ? cols[iDesp] : "-",
+            max_atraso: 0,
+            tareas: []
+          });
+        }
+        const item = grouped[sec].get(key);
+        const taskName = iTar >= 0 ? cols[iTar] : "";
+        if (taskName) {
+          const atrVal = parseFloat((iAtr >= 0 ? cols[iAtr] : "0").replace(",", ".")) || 0;
+          item.tareas.push({
+            tarea: taskName,
+            plan: (iPlan >= 0 && cols[iPlan]) ? cols[iPlan] : "-",
+            actualizada: (iAct >= 0 && cols[iAct]) ? cols[iAct] : "-",
+            real: (iReal >= 0 && cols[iReal]) ? cols[iReal] : "-",
+            atraso: atrVal
+          });
+        }
+      }
+
+      const out = { motocompresores: [], generacion: [], externos: [] };
+      for (const sec of ["motocompresores", "generacion", "externos"]) {
+        out[sec] = Array.from(grouped[sec].values());
+      }
+      if (out.motocompresores.length + out.generacion.length + out.externos.length === 0) return null;
+      return out;
+    }
+
+    async function syncFromSheets(manual) {
+      const url = getSheetUrl();
+      const statusEl = document.getElementById("syncStatus");
+      const nowStr = new Date().toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" });
+
+      if (!url) {
+        statusEl.textContent = "Base inicial cargada · Configurá el link CSV de Google Sheets para sync cada 1h";
+        render();
+        if (manual) openSheetModal();
+        return;
+      }
+
+      try {
+        const bust = url + (url.includes("?") ? "&" : "?") + "_t=" + Date.now();
+        const res = await fetch(bust, { cache: "no-store" });
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        const text = await res.text();
+        const parsed = csvToDb(text);
+        if (!parsed) throw new Error("CSV vacío o columnas inválidas");
+        db = parsed;
+        render();
+        statusEl.textContent = "Sincronizado con Google Sheets · Última actualización: " + nowStr + " (cada 1h)";
+        if (manual) toast("Planilla sincronizada");
+      } catch (err) {
+        statusEl.textContent = "Sin conexión al CSV (se muestran últimos datos cargados) · " + nowStr;
+        if (manual) toast("No se pudo leer el enlace CSV");
+      }
+    }
+
+    function computeMaxDelay(item) {
+      const m = (item.tareas || []).reduce((acc, t) => Math.max(acc, Number(t.atraso) || 0), 0);
+      item.max_atraso = m;
+      return m;
+    }
+
+    function delayPill(days) {
+      const d = Number(days) || 0;
+      if (d <= 0) return `<span class="badge-ok">0 días</span>`;
+      if (d <= 15) return `<span class="badge-warn">+${d} días</span>`;
+      return `<span class="badge-red">+${d} días</span>`;
+    }
+
+    function renderSummary() {
+      const list = db[activeSector] || [];
+      const avg = list.length ? list.reduce((s, x) => s + (Number(x.pct) || 0), 0) / list.length : 0;
+      const maxD = list.reduce((m, x) => Math.max(m, computeMaxDelay(x)), 0);
+      const titles = {
+        motocompresores: "Motocompresores",
+        generacion: "Generación",
+        externos: "Equipos Externos"
+      };
+      document.getElementById("statAvg").textContent = avg.toFixed(1) + "%";
+      document.getElementById("statSecName").textContent = titles[activeSector];
+      document.getElementById("statCount").textContent = list.length;
+      document.getElementById("statDelay").textContent = maxD + " días";
+      document.getElementById("listHeading").textContent = "Cronograma por OF · " + titles[activeSector];
+      document.getElementById("pill-mc").textContent = (db.motocompresores || []).length + " OFs";
+      document.getElementById("pill-gen").textContent = (db.generacion || []).length + " OFs";
+      document.getElementById("pill-ext").textContent = (db.externos || []).length + " OFs";
+
+      const roBanner = document.getElementById("bannerRo");
+      const btnRo = document.getElementById("btnRo");
+      if (readOnly) {
+        roBanner.style.display = "block";
+        btnRo.textContent = "Modo: Solo Lectura";
+      } else {
+        roBanner.style.display = "none";
+        btnRo.textContent = "Cambiar a Solo Lectura";
+      }
+    }
+
+    function renderList() {
+      const wrap = document.getElementById("ofStack");
+      const list = db[activeSector] || [];
+
+      wrap.innerHTML = list.map(item => {
+        const maxD = computeMaxDelay(item);
+        const isOpen = expandedIds.has(item.id);
+        const tasks = item.tareas || [];
+
+        const bars = tasks.map(t => {
+          const d = Number(t.atraso) || 0;
+          const pctW = d > 0 ? Math.min(100, 45 + d) : (t.real && t.real !== "-" ? 100 : 40);
+          return `
+            <div class="crono-line">
+              <div style="font-weight:600;color:#0f172a;">${t.tarea}</div>
+              <div class="crono-track">
+                <div class="crono-fill ${d > 0 ? "delayed" : ""}" style="width:${pctW}%"></div>
+              </div>
+              <div style="text-align:right;color:#475569;font-size:11px;">
+                Plan: <b>${t.plan}</b> · Real: <b>${t.real}</b>
+              </div>
+            </div>
+          `;
+        }).join("");
+
+        const rows = tasks.map(t => `
+          <tr>
+            <td style="font-weight:600;">${t.tarea}</td>
+            <td>${t.plan}</td>
+            <td>${t.actualizada}</td>
+            <td>${t.real}</td>
+            <td>${delayPill(t.atraso)}</td>
+          </tr>
+        `).join("");
+
+        return `
+          <div class="of-item ${isOpen ? "open" : ""}">
+            <button class="of-row-btn" onclick="toggleOf('${item.id}')">
+              <div>
+                <div class="of-num">OF ${item.of}</div>
+                <div class="of-name">${item.ident}</div>
+              </div>
+              <div class="bar-wrap">
+                <div class="bar-track"><div class="bar-fill" style="width:${Math.min(100, item.pct)}%"></div></div>
+                <span style="font-weight:700;font-size:13px;">${Number(item.pct).toFixed(1)}%</span>
+              </div>
+              <div style="font-size:12px;color:#475569;">
+                Fecha / Fin: <b>${item.despacho || "-"}</b>
+              </div>
+              <div>${delayPill(maxD)}</div>
+              <div style="font-size:12px;font-weight:700;color:#1d4ed8;">
+                ${isOpen ? "Cerrar ▲" : "Cronograma ▼"}
+              </div>
+            </button>
+            <div class="of-panel">
+              <div class="meta-row">
+                <div class="meta-box">
+                  <label>Avance (%)</label>
+                  <span class="val-static">${Number(item.pct).toFixed(1)}%</span>
+                </div>
+                <div class="meta-box">
+                  <label>Fecha Despacho / Fin</label>
+                  <span class="val-static">${item.despacho || "-"}</span>
+                </div>
+                <div class="meta-box">
+                  <label>Desvío Máximo</label>
+                  <span class="val-static">${maxD} días</span>
+                </div>
+                <div class="meta-box">
+                  <label>Cliente</label>
+                  <span class="val-static">${item.cliente || "-"}</span>
+                </div>
+              </div>
+
+              <div class="crono-box">
+                <div class="crono-title">Cronograma de Tareas · OF ${item.of}</div>
+                ${bars || "<div style='font-size:12px;color:#64748b;'>Sin tareas registradas</div>"}
+              </div>
+
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>TAREA</th>
+                      <th>PLAN ORIGINAL</th>
+                      <th>FECHA ACT.</th>
+                      <th>FECHA REAL</th>
+                      <th>ATRASO</th>
+                    </tr>
+                  </thead>
+                  <tbody>${rows}</tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function render() {
+      renderSummary();
+      renderList();
+    }
+
+    function copyLink(ro) {
+      const base = window.location.href.split("?")[0];
+      const url = ro ? (base + "?modo=ver") : base;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url).then(() => toast("Link copiado")).catch(() => prompt("Copiá el enlace:", url));
+      } else {
+        prompt("Copiá el enlace:", url);
+      }
+    }
+
+    function exportCsv() {
+      const out = ["Sector,OF,Equipo,Cliente,Avance_Pct,Despacho,Tarea,Plan_Original,Fecha_Act,Fecha_Real,Atraso_Dias"];
+      for (const sec of ["motocompresores", "generacion", "externos"]) {
+        for (const item of (db[sec] || [])) {
+          for (const t of (item.tareas || [])) {
+            out.push([sec, item.of, item.ident, item.cliente || "-", item.pct, item.despacho || "-", t.tarea, t.plan, t.actualizada, t.real, t.atraso].map(v => `"${String(v ?? "").replace(/"/g, '""')}"`).join(","));
+          }
+        }
+      }
+      const blob = new Blob(["\uFEFF" + out.join("\n")], { type: "text/csv;charset=utf-8;" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "seguimiento_produccion.csv";
+      a.click();
+      toast("CSV descargado");
+    }
+
+    render();
+    syncFromSheets(false);
+    setInterval(() => syncFromSheets(false), REFRESH_MS);
+  </script>
+</body>
+</html>
